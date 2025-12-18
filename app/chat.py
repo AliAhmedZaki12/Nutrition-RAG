@@ -1,7 +1,7 @@
 # chat.py
 
 import streamlit as st
-from app.retrieval import build_rag_prompt
+from .retrieval import build_rag_prompt
 
 from llm_openrouter import generate_llm_answer
 
