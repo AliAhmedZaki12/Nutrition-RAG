@@ -1,0 +1,44 @@
+# ----------------------
+# Environment variables
+# ----------------------
+.env
+
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# ----------------------
+# Data & generated files
+# ----------------------
+*.npy
+*.parquet
+*.csv
+data/
+embeddings/
+chunks/
+*.pdf
+
+# ----------------------
+# Streamlit
+# ----------------------
+.streamlit/
+
+# ----------------------
+# OS files
+# ----------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# Logs
+# ----------------------
+*.log
