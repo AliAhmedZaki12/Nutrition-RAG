@@ -1,7 +1,8 @@
 # chat.py
 
 import streamlit as st
-from .retrieval import build_rag_prompt
+
+from vectorstore.vectorstore.retrieval import build_rag_prompt
 
 from llm_openrouter import generate_llm_answer
 
