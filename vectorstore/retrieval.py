@@ -12,11 +12,11 @@ import os
 import numpy as np
 from dotenv import load_dotenv
 from voyageai import Client
-from pinecone import Pinecone
+import pinecone  # <-- Correct import
 
 # Local helpers
 from utils import prompt_formatter
-from llm_openrouter import generate_answer   # <-- IMPORTANT
+from llm.llm_openrouter import generate_llm_answer  # <-- Corrected path
 
 # Load environment variables
 load_dotenv()
@@ -29,16 +29,17 @@ VOYAGE_MODEL = os.getenv("VOYAGE_MODEL", "voyage-3")
 if not PINECONE_API_KEY or not VOYAGE_API_KEY:
     raise ValueError("Missing Pinecone/Voyage API keys in .env")
 
-# Initialize clients
-pc = Pinecone(api_key=PINECONE_API_KEY)
-index = pc.Index(PINECONE_INDEX_NAME)
+# ---------------------------------------------------------
+# Initialize Pinecone and Voyage clients
+# ---------------------------------------------------------
+pinecone.init(api_key=PINECONE_API_KEY)
+index = pinecone.Index(PINECONE_INDEX_NAME)
 voyage = Client(api_key=VOYAGE_API_KEY)
 
 
 # ---------------------------------------------------------
 # 1. Embed query using Voyage AI
 # ---------------------------------------------------------
-
 def embed_query(query: str):
     response = voyage.embed(texts=[query], model=VOYAGE_MODEL)
     embedding = np.array(response.embeddings[0], dtype=np.float32)
@@ -48,7 +49,6 @@ def embed_query(query: str):
 # ---------------------------------------------------------
 # 2. Retrieve top-k from Pinecone
 # ---------------------------------------------------------
-
 def retrieve(query: str, top_k: int = 5):
     print(f"\n🔍 Query: {query}")
 
@@ -75,7 +75,6 @@ def retrieve(query: str, top_k: int = 5):
 # ---------------------------------------------------------
 # 3. Build the RAG prompt
 # ---------------------------------------------------------
-
 def build_rag_prompt(query: str, top_k: int = 5):
     contexts = retrieve(query, top_k=top_k)
     prompt = prompt_formatter(query, contexts)
@@ -85,7 +84,6 @@ def build_rag_prompt(query: str, top_k: int = 5):
 # ---------------------------------------------------------
 # 4. Run full RAG pipeline (Retrieve → Prompt → LLM Answer)
 # ---------------------------------------------------------
-
 def rag_answer(query: str, top_k: int = 5):
     prompt, contexts = build_rag_prompt(query, top_k)
 
@@ -98,7 +96,7 @@ def rag_answer(query: str, top_k: int = 5):
     print(prompt)
 
     print("\n===== LLM ANSWER =====")
-    answer = generate_answer(prompt)
+    answer = generate_llm_answer(prompt)
     print(answer)
 
     return answer
@@ -107,6 +105,5 @@ def rag_answer(query: str, top_k: int = 5):
 # ---------------------------------------------------------
 # Manual test
 # ---------------------------------------------------------
-
 if __name__ == "__main__":
     rag_answer("macronutrients functions", top_k=4)
