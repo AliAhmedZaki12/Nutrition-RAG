@@ -2,7 +2,8 @@
 
 import streamlit as st
 
-from vectorstore.vectorstore.retrieval import build_rag_prompt
+from vectorstore.retrieval import build_rag_prompt
+
 
 from llm_openrouter import generate_llm_answer
 
