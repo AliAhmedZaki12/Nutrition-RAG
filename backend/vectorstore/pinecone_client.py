@@ -21,19 +21,16 @@ def get_index():
 
 def upsert_embeddings() -> None:
     embeddings = np.load("data/embeddings/embeddings.npy")
-
-    # ✅ FIX #2: unified source — same CSV used everywhere
     df = pd.read_csv("data/meta/chunks_meta.csv")
 
     if len(embeddings) != len(df):
         raise ValueError(
-            f"❌ Mismatch: {len(embeddings)} embeddings vs {len(df)} metadata rows. "
-            "Re-run the full pipeline."
+            f"Mismatch: {len(embeddings)} embeddings vs {len(df)} rows"
         )
 
     dim = embeddings.shape[1]
-    existing_indexes = [i["name"] for i in pc.list_indexes()]
 
+    existing_indexes = [i["name"] for i in pc.list_indexes()]
     if INDEX_NAME not in existing_indexes:
         pc.create_index(
             name=INDEX_NAME,
@@ -41,25 +38,33 @@ def upsert_embeddings() -> None:
             metric="cosine",
             spec=ServerlessSpec(cloud=CLOUD, region=REGION),
         )
-        print(f"✅ Pinecone index '{INDEX_NAME}' created (dim={dim})")
+        print(f"Created index '{INDEX_NAME}' (dim={dim})")
 
     index = pc.Index(INDEX_NAME)
-    BATCH_SIZE = 100
 
-    print("📤 Uploading to Pinecone...")
+    BATCH_SIZE = 100
+    print("Uploading to Pinecone...")
 
     for i in range(0, len(df), BATCH_SIZE):
         batch = []
+
         for j in range(min(BATCH_SIZE, len(df) - i)):
             idx = i + j
             row = df.iloc[idx]
+
             batch.append(
                 {
-                    "id":     str(row["id"]),
+                    "id": str(row["id"]),
                     "values": embeddings[idx].tolist(),
-                    "metadata": row.to_dict(),
+                    "metadata": {
+                        "id": str(row["id"]),
+                        "text": row["sentence_chunk"],
+                        "page": row["page_number"],
+                    },
                 }
             )
-        index.upsert(vectors=batch, namespace=NAMESPACE)   # ✅ FIX #1: namespace present
 
-    print(f"✅ Pinecone ready — {len(df)} vectors in namespace '{NAMESPACE}'")
+        index.upsert(vectors=batch, namespace=NAMESPACE)
+
+    stats = index.describe_index_stats()
+    print(f"Done. Total vectors: {stats}")
