@@ -1,22 +1,34 @@
 def hybrid_search(
     dense_results: list[dict],
     sparse_results: list[dict],
-    alpha: float = 0.7,
+    k: int = 60,
     top_k: int = 5,
 ) -> list[dict]:
-    """
-    Weighted fusion of dense (semantic) and sparse (BM25) results.
-    alpha=0.7 → 70 % dense, 30 % sparse (tunable via env or caller).
-    """
-    combined: dict = {}
+    
 
-    for r in dense_results:
-        key = (r["text"], r.get("page"))
-        combined[key] = combined.get(key, 0.0) + alpha * r["score"]
+    scores = {}
 
-    for r in sparse_results:
-        key = (r["text"], r.get("page"))
-        combined[key] = combined.get(key, 0.0) + (1 - alpha) * r["score"]
+    # Dense
+    for rank, r in enumerate(dense_results):
+        rid = r["id"]
+        scores[rid] = scores.get(rid, 0) + 1 / (k + rank)
 
-    ranked = sorted(combined.items(), key=lambda x: x[1], reverse=True)
-    return [{"text": k[0], "page": k[1], "score": v} for k, v in ranked[:top_k]]
+    # Sparse
+    for rank, r in enumerate(sparse_results):
+        rid = r["id"]
+        scores[rid] = scores.get(rid, 0) + 1 / (k + rank)
+
+    # Merge metadata
+    merged = {}
+
+    for r in dense_results + sparse_results:
+        rid = r["id"]
+        if rid not in merged:
+            merged[rid] = r
+
+    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+    return [
+        {**merged[rid], "score": score}
+        for rid, score in ranked[:top_k]
+    ]
