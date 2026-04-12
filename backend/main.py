@@ -15,21 +15,32 @@ async def lifespan(app: FastAPI):
     print("🚀 Starting Nutrition RAG API...")
 
     try:
+        #  1. Connect to Pinecone
         index = get_index()
 
-        # ✅ FIX #2: unified source → CSV only (same file used during Pinecone upsert)
-        # Old code used parquet here but CSV in upsert → silent index/text mismatch
-        df = pd.read_csv("data/meta/chunks_meta.csv")
+        #  2. Load metadata (FIXED PATH)
+        df = pd.read_csv("backend/data/meta/chunks_meta.csv")
         chunks = df.to_dict(orient="records")
 
+        if len(chunks) == 0:
+            raise ValueError("No data found in CSV")
+
+        #  3. Init retrievers
         init_retrievers(index, chunks)
-        print("✅ Retrievers initialized successfully")
+
+        #  4. Debug Pinecone
+        stats = index.describe_index_stats()
+        print("📊 Pinecone stats:", stats)
+
+        print(" Retrievers initialized successfully")
 
     except Exception as e:
-        print(f"❌ Error during startup: {e}")
-        init_retrievers(None, [])
+        print(f"❌ Startup failed: {e}")
+        # ❌ IMPORTANT: لا تعمل init بـ None
+        raise RuntimeError("Startup failed — check logs")
 
     yield
+
     print("🛑 Shutting down...")
 
 
