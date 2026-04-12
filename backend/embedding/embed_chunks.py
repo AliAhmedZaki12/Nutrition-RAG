@@ -15,7 +15,7 @@ client = Client(api_key=VOYAGE_API_KEY)
 
 def embed_chunks() -> np.ndarray:
     # ✅ Using CSV (unified source) instead of parquet
-    df = pd.read_csv("data/meta/chunks_meta.csv")
+    df = pd.read_csv("backend/data/meta/chunks_meta.csv")
     texts = df["sentence_chunk"].dropna().tolist()
 
     if not texts:
