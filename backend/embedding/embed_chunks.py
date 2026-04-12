@@ -47,5 +47,5 @@ def embed_chunks() -> np.ndarray:
     os.makedirs("data/embeddings", exist_ok=True)
     np.save("data/embeddings/embeddings.npy", arr)
 
-    print(f"✅ Embeddings saved → shape {arr.shape}")
+    print(f" Embeddings saved → shape {arr.shape}")
     return arr
