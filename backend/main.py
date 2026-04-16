@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+import os
 import pandas as pd
 
 from backend.routes import router
@@ -14,30 +15,37 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     print("🚀 Starting Nutrition RAG API...")
 
+    app.state.ready = False
+
     try:
-        #  1. Connect to Pinecone
+        # 1. Connect to Pinecone
         index = get_index()
 
-        #  2. Load metadata (FIXED PATH)
-        df = pd.read_csv("backend/data/meta/chunks_meta.csv")
+        # 2. Load metadata safely (portable path)
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(BASE_DIR, "backend/data/meta/chunks_meta.csv")
+
+        df = pd.read_csv(csv_path)
         chunks = df.to_dict(orient="records")
 
-        if len(chunks) == 0:
-            raise ValueError("No data found in CSV")
+        if not chunks:
+            print(" Warning: No chunks found in CSV")
 
-        #  3. Init retrievers
+        # 3. Init retrievers
         init_retrievers(index, chunks)
 
-        #  4. Debug Pinecone
+        # 4. Debug Pinecone
         stats = index.describe_index_stats()
-        print("📊 Pinecone stats:", stats)
+        print(" Pinecone stats:", stats)
 
         print(" Retrievers initialized successfully")
 
+        app.state.ready = True
+
     except Exception as e:
-        print(f"❌ Startup failed: {e}")
-        # ❌ IMPORTANT: لا تعمل init بـ None
-        raise RuntimeError("Startup failed — check logs")
+        print(f" Startup error: {e}")
+        print(" Running in degraded mode (API still alive)")
+        app.state.ready = False
 
     yield
 
