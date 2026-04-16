@@ -14,18 +14,24 @@ client = Client(api_key=VOYAGE_API_KEY)
 
 
 def embed_chunks() -> np.ndarray:
-    # ✅ Using CSV (unified source) instead of parquet
-    df = pd.read_csv("backend/data/meta/chunks_meta.csv")
+  
+    CSV_PATH = "backend/data/meta/chunks_meta.csv"
+    EMB_PATH = "backend/data/embeddings/embeddings.npy"
+
+   
+    df = pd.read_csv(CSV_PATH)
+
     texts = df["sentence_chunk"].dropna().tolist()
 
     if not texts:
-        raise ValueError("❌ No texts found for embedding")
+        raise ValueError(" No texts found for embedding")
 
-    embeddings: list = []
+    embeddings = []
     BATCH_SIZE = 32
 
     print(f"🔢 Embedding {len(texts)} chunks...")
 
+    # 🔁 batching + retry
     for i in range(0, len(texts), BATCH_SIZE):
         batch = texts[i : i + BATCH_SIZE]
 
@@ -35,17 +41,22 @@ def embed_chunks() -> np.ndarray:
                 embeddings.extend(r.embeddings)
                 break
             except Exception as e:
-                print(f"⚠️  Retry {attempt + 1}: {e}")
+                print(f" Retry {attempt + 1}: {e}")
                 time.sleep(2 * (attempt + 1))
         else:
-            raise RuntimeError("❌ Embedding failed after retries")
+            raise RuntimeError(" Embedding failed after retries")
 
         time.sleep(0.5)
 
+    
     arr = np.array(embeddings, dtype=np.float32)
 
-    os.makedirs("data/embeddings", exist_ok=True)
-    np.save("data/embeddings/embeddings.npy", arr)
+    
+    os.makedirs(os.path.dirname(EMB_PATH), exist_ok=True)
 
-    print(f" Embeddings saved → shape {arr.shape}")
+   
+    np.save(EMB_PATH, arr)
+
+    print(f" Embeddings saved → {EMB_PATH} | shape {arr.shape}")
+
     return arr
