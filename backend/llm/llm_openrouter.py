@@ -4,21 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ─────────────────────────────────────────────────────
-# ✅ FIX — HEADERS كانت تُبنى على module level
-#
-# المشكلة القديمة:
-#   OPENROUTER_API_KEY = os.getenv(...)   ← ممكن يرجع None
-#   HEADERS = {"Authorization": f"Bearer {OPENROUTER_API_KEY}"}
-#   → الـ header بيتبنى لما الملف يُستورد مش لما الدالة تتنفذ
-#   → لو الـ env مش محمّل وقت الـ import → "Bearer None" → 401 دايمًا
-#
-# الحل:
-#   نقل بناء الـ HEADERS جوه الدالة بحيث يتبنى وقت الاستدعاء
-#   وبعد تحميل الـ .env بشكل مضمون
-# ─────────────────────────────────────────────────────
-
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "nex-agi/deepseek-v3.1-nex-n1:free")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat-v3-0324:free")
 BASE_URL         = "https://openrouter.ai/api/v1/chat/completions"
 
 
@@ -30,7 +16,7 @@ def generate_answer(
     # ✅ يُبنى هنا — بعد تحميل .env بشكل مضمون
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        raise RuntimeError("❌ OPENROUTER_API_KEY is not set in environment")
+        raise RuntimeError(" OPENROUTER_API_KEY is not set in environment")
 
     headers = {
         "Authorization": f"Bearer {api_key}",
