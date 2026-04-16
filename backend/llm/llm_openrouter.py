@@ -23,8 +23,7 @@ def generate_answer(
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
     headers = {
-        "Authorization": f"Bearer {api_key}",
-        "HTTP-Referer": "https://nutrition-rag--alizaki6797.replit.app",  
+        "Authorization": f"Bearer {api_key}", 
         "X-Title": "Nutrition RAG",                                       
         "Content-Type": "application/json",
     }
