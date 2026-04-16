@@ -1,9 +1,6 @@
-def hybrid_search(
-    dense_results: list[dict],
-    sparse_results: list[dict],
-    k: int = 60,
-    top_k: int = 5,
-) -> list[dict]:
+def hybrid_search(dense_results, sparse_results, alpha=0.7, k=60, top_k=5):
+    scores[rid] += alpha       * (1 / (k + rank)) 
+    scores[rid] += (1 - alpha) * (1 / (k + rank))
     
 
     scores = {}
