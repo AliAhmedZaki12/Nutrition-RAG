@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
 
         # 2. Load metadata safely (portable path)
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        csv_path = os.path.join(BASE_DIR, "backend/data/meta/chunks_meta.csv")
+        csv_path = os.path.join(BASE_DIR, "data/meta/chunks_meta.csv")
 
         df = pd.read_csv(csv_path)
         chunks = df.to_dict(orient="records")
