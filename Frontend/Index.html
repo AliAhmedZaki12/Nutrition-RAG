@@ -1,1 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriAI — Smart Dashboard</title>
 
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+:root{
+  --teal:#0d9488;
+  --teal-dark:#0f766e;
+  --bg:#f8fafc;
+  --surface:#fff;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --text-2:#475569;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans';display:flex;height:100vh;background:var(--bg)}
+
+/* Layout */
+.sidebar{width:220px;background:#fff;border-right:1px solid var(--border);padding:20px}
+.main{flex:1;display:flex;flex-direction:column}
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 320px}
+
+/* Cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin:12px}
+.card-title{font-weight:600;margin-bottom:10px}
+
+/* Inputs */
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px}
+
+/* Meal */
+.day-card{border:1px solid var(--border);border-radius:12px;margin-bottom:10px}
+.day-header{padding:10px;background:#f1f5f9;font-weight:600}
+.meal-row{padding:10px;border-top:1px solid var(--border)}
+.meal-name{color:var(--teal-dark);cursor:pointer}
+
+/* Chat */
+.chat{border-left:1px solid var(--border);display:flex;flex-direction:column}
+.chat-box{flex:1;overflow:auto;padding:10px}
+.msg{margin-bottom:10px}
+.user{text-align:right}
+.bubble{display:inline-block;padding:8px 12px;border-radius:10px;max-width:220px}
+.user .bubble{background:var(--teal);color:#fff}
+.ai .bubble{background:#f1f5f9;border:1px solid var(--border)}
+
+.input{display:flex;border-top:1px solid var(--border)}
+.input input{flex:1;border:none;padding:10px}
+.input button{background:var(--teal);color:#fff;border:none;padding:10px}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h3>NutriAI</h3>
+</div>
+
+<div class="main">
+
+<div class="topbar">
+  <div>Dashboard</div>
+  <button onclick="generateMealPlan()">Generate Plan</button>
+</div>
+
+<div class="body">
+
+<!-- LEFT -->
+<div>
+
+<div class="card">
+<div class="card-title">Profile</div>
+<input id="age" placeholder="Age"/>
+<input id="height" placeholder="Height"/>
+<input id="weight" placeholder="Weight"/>
+<select id="gender"><option>Male</option><option>Female</option></select>
+
+<select id="activity">
+<option>Sedentary</option>
+<option>Moderately Active</option>
+<option>Very Active</option>
+</select>
+
+<select id="goal">
+<option>Lose Weight</option>
+<option>Maintain</option>
+<option>Gain Muscle</option>
+</select>
+
+<select id="diet">
+<option>No Preference</option>
+<option>Keto</option>
+<option>Vegetarian</option>
+</select>
+
+<textarea id="notes" placeholder="Notes..."></textarea>
+</div>
+
+<div class="card">
+<div class="card-title">Meal Plan</div>
+<div id="plan"></div>
+</div>
+
+</div>
+
+<!-- RIGHT CHAT -->
+<div class="chat">
+<div class="chat-box" id="chat"></div>
+
+<div class="input">
+<input id="inp" placeholder="Ask AI..."/>
+<button onclick="send()">Send</button>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const API_BASE = "https://nutrition-rag--alizaki6797.replit.app";
+
+let PLAN_DATA = [];
+let loading = false;
+const cache = {};
+
+/* =========================
+   BUILD PROFILE
+========================= */
+function buildProfile(){
+  return {
+    age:+age.value||0,
+    height:+height.value||0,
+    weight:+weight.value||0,
+    gender:gender.value,
+    activity:activity.value,
+    goal:goal.value,
+    diet:diet.value,
+    conditions:[],
+    allergies:[],
+    notes:notes.value,
+    target_weight:0,
+    target_date:""
+  }
+}
+
+/* =========================
+   VALIDATION
+========================= */
+function valid(p){
+  return p.age>0 && p.weight>0 && p.height>0;
+}
+
+/* =========================
+   CHAT UI
+========================= */
+function addMsg(text,type){
+  const c=chat;
+  const d=document.createElement("div");
+  d.className="msg "+type;
+  d.innerHTML=`<div class="bubble">${text}</div>`;
+  c.appendChild(d);
+  c.scrollTop=c.scrollHeight;
+}
+
+/* =========================
+   AI CALL
+========================= */
+async function callAI(msg){
+  if(loading) return;
+
+  if(cache[msg]){
+    addMsg(cache[msg],"ai");
+    return;
+  }
+
+  const profile=buildProfile();
+
+  if(!valid(profile)){
+    addMsg("⚠️ Please fill profile first","ai");
+    return;
+  }
+
+  loading=true;
+  addMsg("Thinking...","ai");
+
+  try{
+    const res=await fetch(API_BASE+"/query",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        q:msg,
+        top_k:5,
+        profile:profile
+      })
+    });
+
+    const data=await res.json();
+
+    chat.lastChild.remove();
+
+    addMsg(data.answer || "No response","ai");
+    cache[msg]=data.answer;
+
+    if(data.meal_plan){
+      PLAN_DATA=data.meal_plan;
+      renderPlan();
+    }
+
+  }catch{
+    addMsg("Connection error","ai");
+  }
+
+  loading=false;
+}
+
+/* =========================
+   MEAL PLAN
+========================= */
+function renderPlan(){
+  plan.innerHTML="";
+
+  PLAN_DATA.forEach(d=>{
+    plan.innerHTML+=`
+      <div class="day-card">
+        <div class="day-header">Day ${d.day}</div>
+
+        <div class="meal-row">
+          <div class="meal-name" onclick="explainMeal(${d.day},'breakfast')">
+            ${d.breakfast.name}
+          </div>
+        </div>
+
+        <div class="meal-row">
+          <div class="meal-name" onclick="explainMeal(${d.day},'lunch')">
+            ${d.lunch.name}
+          </div>
+        </div>
+
+        <div class="meal-row">
+          <div class="meal-name" onclick="explainMeal(${d.day},'dinner')">
+            ${d.dinner.name}
+          </div>
+        </div>
+
+      </div>
+    `;
+  });
+}
+
+/* =========================
+   ACTIONS
+========================= */
+function send(){
+  const v=inp.value.trim();
+  if(!v) return;
+
+  inp.value="";
+  addMsg(v,"user");
+  callAI(v);
+}
+
+function generateMealPlan(){
+  const p=buildProfile();
+
+  const prompt=`
+Generate a 7-day meal plan for:
+Age: ${p.age}
+Weight: ${p.weight}
+Goal: ${p.goal}
+Diet: ${p.diet}
+Conditions: ${p.conditions}
+Allergies: ${p.allergies}
+`;
+
+  addMsg("Generate meal plan","user");
+  callAI(prompt);
+}
+
+function explainMeal(day,type){
+  const meal=PLAN_DATA[day-1][type];
+
+  const prompt=`
+Explain this meal:
+${meal.name}
+
+Based on my profile:
+${JSON.stringify(buildProfile())}
+`;
+
+  addMsg("Explain meal","user");
+  callAI(prompt);
+}
+
+/* INIT */
+addMsg("AI Ready 🚀","ai");
+</script>
+
+</body>
+</html>
