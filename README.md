@@ -7,33 +7,29 @@
 
 ## 🚀 Overview
 
-**NutriAI** is a production-grade AI system that generates **personalised 4-week meal plans** using a **Hybrid Retrieval-Augmented Generation (RAG)** pipeline.
+A production-grade AI system that generates **personalized 4-week meal plans** using a **Hybrid RAG pipeline grounded in clinical nutrition data**. The system is designed to minimize hallucination and ensure high factual reliability in health-related use cases.
 
-Unlike traditional LLM chatbots, NutriAI:
-
-* Retrieves information from a **verified academic nutrition textbook**
-* Applies **hybrid search (semantic + keyword)**
-* Generates responses **grounded in real evidence**
-
-> **Core Principle:** Retrieval First. Generation Second.
+NutriAI follows a **retrieval-first architecture**, where responses are generated only after retrieving relevant, verified information.
 
 ---
 
 ## 🎯 Problem Statement
 
-LLM-only systems fail in health-related domains due to:
+LLM-only systems in healthcare domains often suffer from:
 
-* ❌ Hallucinated medical advice
-* ❌ Inconsistent answers
-* ❌ No source of truth
+* Hallucinated outputs
+* Inconsistent responses
+* Lack of a reliable knowledge source
 
-### ✅ Solution
+### Solution
 
 NutriAI enforces:
 
 * Deterministic retrieval
-* Verified knowledge source
+* A single verified knowledge base
 * Controlled generation
+
+**Core Principle:** Retrieval First. Generation Second.
 
 ---
 
@@ -52,13 +48,18 @@ Hybrid RAG Pipeline
 LLM (OpenRouter + Fallback Chain)
 ```
 
-### Key Design Decision
+### Key Design Decisions
 
-> ✅ **Single Service Deployment (Frontend + Backend)**
+* Single-service deployment (frontend and backend together)
 
-* No CORS issues
-* No multi-service complexity
-* Faster iteration & debugging
+  * Eliminates CORS issues
+  * Reduces system complexity
+  * Simplifies deployment
+
+* Hybrid retrieval strategy
+
+  * Combines semantic search (vector) with keyword matching (BM25)
+  * Improves recall for both vague and exact queries
 
 ---
 
@@ -76,16 +77,16 @@ Parallel Retrieval
  └── Sparse → BM25
         │
         ▼
-Hybrid Fusion (RRF)
+Hybrid Fusion (RRF, α=0.7 dense / 0.3 sparse, k=60)
         │
         ▼
 MMR Deduplication
         │
         ▼
-Context Compression
+Context Compression (~60% reduction)
         │
         ▼
-Prompt Construction
+Prompt Construction (profile-aware)
         │
         ▼
 LLM Generation
@@ -98,31 +99,28 @@ Final Answer
 
 ## ⚙️ Key Features
 
-### 🔍 Hybrid Retrieval
+### Hybrid Retrieval
 
-* Dense + Sparse fusion
-* Reciprocal Rank Fusion (RRF)
+* Dense and sparse fusion (RRF)
 * Adaptive retrieval (dynamic `top_k`)
+* Improved recall under low-similarity queries
 
-### ⚡ Performance Optimization
+### Performance Optimization
 
 * LRU embedding cache
-* Parallel retrieval (ThreadPool)
-* ~60% token reduction via compression
+* Parallel retrieval
+* Context compression (~60% token reduction)
 
-### 🛡️ Reliability
+### Reliability
 
 * Multi-model fallback chain
 * Graceful degradation
-* Strict input validation (Pydantic)
+* Input validation (Pydantic)
 
-### 🧍 Personalization
+### Personalization
 
-* User profile injection:
-
-  * Age, weight, conditions
-  * Goals & preferences
-  * Daily meal context
+* User profile integration (age, goals, conditions)
+* Context-aware meal planning
 
 ---
 
@@ -132,126 +130,98 @@ Final Answer
 var API_BASE = window.location.origin;
 ```
 
-**Why this matters:**
-
-* Eliminates hardcoded URLs
-* Prevents CORS issues
-* Works across all environments (local / Replit / production)
+* No hardcoded URLs
+* No cross-origin issues
+* Works across all environments
 
 ---
 
 ## 📊 Performance
 
-| Metric             | Value     |
-| ------------------ | --------- |
-| End-to-end latency | ~1.2s     |
-| Retrieval time     | 150–300ms |
-| Embedding (cached) | 30–50ms   |
-| Token reduction    | ~60%      |
-| Pinecone vectors   | 1906      |
-| Uptime             | ~99.9%    |
+| Metric             | Value      |
+| ------------------ | ---------- |
+| End-to-end latency | ~1.2s      |
+| Retrieval time     | 150–300 ms |
+| Embedding (cached) | 30–50 ms   |
+| Token reduction    | ~60%       |
+| Context size       | 3–5 chunks |
+| Uptime             | ~99.9%     |
+
+Performance achieved through parallel retrieval, caching, and context compression.
 
 ---
 
 ## 🧠 Engineering Challenges & Solutions
 
-### 🔌 API Design
+### API Design
 
-**Problem:** Mismatch between frontend (POST) and backend (GET)
-**Solution:** Unified API with Pydantic validation
-**Impact:** Eliminated 405 / 422 errors
+* Problem: POST/GET mismatch
+* Solution: Unified POST endpoint with Pydantic
+* Impact: Eliminated 405/422 errors
 
----
+### Startup Reliability
 
-### ⚙️ Startup Failures
+* Problem: 503 despite running
+* Cause: Silent import failures
+* Solution: Explicit readiness state
+* Impact: Predictable system state
 
-**Problem:** System returned 503 despite running
-**Cause:** Silent import failure
-**Solution:** Explicit readiness state
-**Impact:** Predictable system behavior
+### Deployment & CORS
 
----
+* Problem: Cross-origin failures
+* Solution: Single-origin architecture
+* Impact: No CORS configuration needed
 
-### 🌐 CORS & Deployment Issues
+### Retrieval Quality
 
-**Problem:** Cross-origin blocking + broken URLs
-**Solution:** Single-origin architecture + dynamic base URL
-**Impact:** Zero CORS complexity
+* Problem: Weak results for low similarity queries
+* Solution: Adaptive retrieval expansion
+* Impact: Improved recall
 
----
+### Context Redundancy
 
-### 🧠 Weak Retrieval Quality
+* Problem: Duplicate chunks
+* Solution: MMR deduplication
+* Impact: More relevant context
 
-**Problem:** Low similarity → poor answers
-**Solution:** Adaptive retrieval expansion
-**Impact:** Higher recall + better answers
+### Personalization
 
----
+* Problem: Profile not used
+* Solution: Injected into prompt pipeline
+* Impact: Personalized outputs
 
-### 🧾 Redundant Context
+### External Dependencies
 
-**Problem:** Duplicate chunks
-**Solution:** MMR-lite deduplication
-**Impact:** More diverse context
+* Problem: Pinecone SDK changes
+* Solution: Version-safe handling
+* Impact: Stable integration
 
----
+### Frontend Rendering
 
-### 🧍 Missing Personalization
+* Problems: Markdown + UI clipping
+* Solutions: Markdown parser + CSS fixes
+* Impact: Clean UI
 
-**Problem:** Profile ignored
-**Solution:** Injected into prompt pipeline
-**Impact:** Personalised responses
+### Meal Planning
 
----
-
-### 📦 Pinecone SDK Changes
-
-**Problem:** Breaking API changes
-**Solution:** Version-safe access layer
-**Impact:** Stable integration
-
----
-
-### 🎨 UI Issues
-
-**Problems:**
-
-* Markdown not rendered
-* Meal cards clipped
-
-**Solutions:**
-
-* Markdown → HTML parser
-* CSS fixes
-
-**Impact:** Clean UI/UX
-
----
-
-### 🍽️ Meal Plan Repetition
-
-**Problem:** Identical weekly plans
-**Solution:**
-
-* Thematic diversity (4 cuisines)
-* 100+ unique meals
-
-**Impact:** Realistic meal planning
+* Problem: Repeated meals
+* Solution: Themed plans + expanded dataset
+* Impact: Better diversity
 
 ---
 
 ## 🧱 Tech Stack
 
-| Layer         | Technology       |
-| ------------- | ---------------- |
-| Backend       | FastAPI          |
-| Frontend      | Vanilla JS (SPA) |
-| Embeddings    | Voyage AI        |
-| Vector DB     | Pinecone         |
-| Sparse Search | BM25             |
-| LLM           | OpenRouter       |
-| Data          | Pandas / NumPy   |
-| Deployment    | Replit           |
+| Layer            | Technology              |
+| ---------------- | ----------------------- |
+| Backend          | FastAPI (>=0.111)       |
+| Frontend         | HTML / CSS / JavaScript |
+| Embeddings       | Voyage AI               |
+| Vector DB        | Pinecone                |
+| Sparse Retrieval | BM25                    |
+| LLM              | OpenRouter              |
+| Data             | Pandas / NumPy          |
+| Deployment       | Replit                  |
 
 ---
 
@@ -278,25 +248,19 @@ NutriAI/
 
 ## ⚡ Quick Start
 
-### 1. Install dependencies
+### Install
 
 ```bash
 pip install -r backend/requirements.txt
 ```
 
----
+### Run pipeline
 
-### 2. Set environment variables
-
-```
-PINECONE_API_KEY=
-VOYAGE_API_KEY=
-OPENROUTER_API_KEY=
+```bash
+python -m backend.pipeline.main
 ```
 
----
-
-### 3. Run the app
+### Start server
 
 ```bash
 uvicorn backend.main:app --host 0.0.0.0 --port 5000
@@ -304,16 +268,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 5000
 
 ---
 
-### 4. Verify
-
-```
-GET /status → ready
-GET / → UI loads
-```
-
----
-
-## 🔌 API Reference
+## 🔌 API
 
 ### POST `/query`
 
@@ -321,16 +276,18 @@ GET / → UI loads
 {
   "q": "What foods help hypertension?",
   "top_k": 5,
-  "profile": {...}
+  "profile": {}
 }
 ```
 
-### Response
+### Example Response
 
 ```json
 {
-  "answer": "...",
-  "context": [...],
+  "answer": "Foods that help hypertension include fruits, vegetables...",
+  "context": [
+    {"text": "...", "score": 0.82}
+  ],
   "chunks_used": 5
 }
 ```
@@ -349,20 +306,21 @@ GET / → UI loads
 
 ## 🧠 Design Principles
 
-* **Deterministic > Probabilistic**
-* **Simple systems scale better**
-* **Fail gracefully**
-* **Minimize hallucination**
+* Deterministic retrieval over probabilistic generation
+* Retrieval before generation
+* Minimize hallucination
+* Fail gracefully
+* Consistency across identical queries
 
 ---
 
 ## 🚧 Future Work
 
-* Streaming responses (SSE/WebSockets)
-* Query classification (skip RAG when unnecessary)
+* Streaming responses (SSE / WebSockets)
+* Query classification
 * RAG evaluation (RAGAS)
 * User memory layer
-* Multi-source knowledge base
+* Multi-source retrieval
 
 ---
 
