@@ -10,7 +10,6 @@ from backend.ingestion.utils import (
     filter_chunks,
 )
 
-# ── مسارات موحَّدة ──────────────────────────────────────────
 BASE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PARQUET_DIR = os.path.join(BASE_DIR, "data", "parquet")
 META_DIR    = os.path.join(BASE_DIR, "data", "meta")
@@ -20,16 +19,16 @@ def download_pdf(url: str, pdf_path: str) -> None:
     """Download PDF from URL if it doesn't exist locally."""
     os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
     if os.path.exists(pdf_path):
-        print(f"⏩ PDF already exists: {pdf_path}")
+        print(f" PDF already exists: {pdf_path}")
         return
-    print(f"⬇️  Downloading PDF from {url}…")
+    print(f"  Downloading PDF from {url}…")
     try:
         r = requests.get(url, timeout=120, stream=True)
         r.raise_for_status()
         with open(pdf_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
-        print("✅ PDF downloaded successfully")
+        print(" PDF downloaded successfully")
     except Exception as e:
         raise RuntimeError(f"PDF download failed: {e}")
 
@@ -62,7 +61,7 @@ def ingest_pdf(
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
     # ── 2. Extract text ──────────────────────────────────
-    print("📄 Reading PDF and extracting text…")
+    print(" Reading PDF and extracting text…")
     doc   = fitz.open(pdf_path)
     pages = []
     for i, page in enumerate(doc):
@@ -87,5 +86,5 @@ def ingest_pdf(
     df.to_parquet(os.path.join(PARQUET_DIR, "chunks.parquet"), index=False)
     df.to_csv(os.path.join(META_DIR, "chunks_meta.csv"),       index=False)
 
-    print(f"✅ Ingestion complete: {len(chunks)} chunks saved")
+    print(f" Ingestion complete: {len(chunks)} chunks saved")
     return chunks
