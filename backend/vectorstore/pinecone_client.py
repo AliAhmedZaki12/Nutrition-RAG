@@ -25,7 +25,7 @@ def _get_pc():
         from pinecone import Pinecone
         api_key = os.getenv("PINECONE_API_KEY")
         if not api_key:
-            raise RuntimeError("❌ PINECONE_API_KEY is not set in environment")
+            raise RuntimeError(" PINECONE_API_KEY is not set in environment")
         _pc = Pinecone(api_key=api_key)
     return _pc
 
@@ -82,7 +82,7 @@ def upsert_embeddings(force: bool = False) -> None:
             metric="cosine",
             spec=ServerlessSpec(cloud=CLOUD, region=REGION),
         )
-        print(f"✅ Index created")
+        print(f" Index created")
 
     index = pc.Index(INDEX_NAME)
 
@@ -90,12 +90,12 @@ def upsert_embeddings(force: bool = False) -> None:
     if not force:
         count = _get_vector_count(index)
         if count >= len(df):
-            print(f"⏩ Skipping upsert — {count} vectors already in Pinecone")
+            print(f" Skipping upsert — {count} vectors already in Pinecone")
             return
 
     # ── Batch upsert ─────────────────────────────────────
     BATCH = 100
-    print(f"📤 Uploading {len(df)} vectors to Pinecone…")
+    print(f" Uploading {len(df)} vectors to Pinecone…")
 
     for i in range(0, len(df), BATCH):
         batch = []
@@ -117,4 +117,4 @@ def upsert_embeddings(force: bool = False) -> None:
         print(f"   ✓ Uploaded batch {i // BATCH + 1} / {-(-len(df) // BATCH)}")
 
     final_count = _get_vector_count(index)
-    print(f"✅ Upsert complete. Total vectors in Pinecone: {final_count}")
+    print(f" Upsert complete. Total vectors in Pinecone: {final_count}")
