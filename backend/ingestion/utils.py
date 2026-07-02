@@ -2,7 +2,6 @@ import re
 import nltk
 from nltk.tokenize import sent_tokenize
 
-# ── تحميل NLTK data بشكل آمن ──────────────────────────────
 def _ensure_nltk():
     for resource in ["punkt", "punkt_tab"]:
         try:
