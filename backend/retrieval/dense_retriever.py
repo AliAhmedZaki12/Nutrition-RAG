@@ -27,5 +27,5 @@ def dense_search(index, query_embedding: list, top_k: int = 5) -> list[dict]:
             )
         return results
     except Exception as e:
-        print(f"⚠ Dense search error: {e}")
+        print(f" Dense search error: {e}")
         return []
