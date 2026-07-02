@@ -19,24 +19,24 @@ PDF_URL = "https://pressbooks.oer.hawaii.edu/humannutrition2/open/download?type=
 
 def run_pipeline(force: bool = False) -> None:
     print("\n" + "═" * 55)
-    print("  🚀  NUTRIAI RAG PIPELINE")
+    print("    NUTRIAI RAG PIPELINE")
     print("═" * 55 + "\n")
 
     # ── Step 1: Ingestion ────────────────────────────────
     if force or not os.path.exists(CSV_PATH):
-        print("📄 [1/3] Running PDF ingestion…")
+        print(" [1/3] Running PDF ingestion…")
         from backend.ingestion.ingest_pdf import ingest_pdf
         ingest_pdf(pdf_path=PDF_PATH, download_url=PDF_URL, chunk_size=8)
     else:
-        print("⏩ [1/3] Ingestion skipped — CSV already exists")
+        print(" [1/3] Ingestion skipped — CSV already exists")
 
     # ── Step 2: Embedding ────────────────────────────────
     if force or not os.path.exists(EMB_PATH):
-        print("\n🔢 [2/3] Running embedding…")
+        print("\n [2/3] Running embedding…")
         from backend.embedding.embed_chunks import embed_chunks
         embed_chunks()
     else:
-        print("⏩ [2/3] Embedding skipped — embeddings.npy already exists")
+        print(" [2/3] Embedding skipped — embeddings.npy already exists")
 
     # ── Step 3: Pinecone Upsert ──────────────────────────
     print("\n📤 [3/3] Checking Pinecone…")
@@ -44,7 +44,7 @@ def run_pipeline(force: bool = False) -> None:
     upsert_embeddings(force=force)
 
     print("\n" + "═" * 55)
-    print("  ✅  PIPELINE COMPLETE — Ready to start the API")
+    print("    PIPELINE COMPLETE — Ready to start the API")
     print("═" * 55 + "\n")
 
 
