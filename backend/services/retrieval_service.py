@@ -35,12 +35,12 @@ def init_retrievers(index, documents: list[dict]) -> None:
 
     if not documents:
         raise ValueError(
-            "❌ documents list is empty — run the ingestion pipeline first"
+            " documents list is empty — run the ingestion pipeline first"
         )
 
     sparse      = SparseRetriever(documents)
     dense_index = index
-    print(f"✅ Retrievers initialised with {len(documents)} chunks")
+    print(f" Retrievers initialised with {len(documents)} chunks")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ def rag_answer_hybrid_service(
     # ── 2c. Fall back to general nutrition knowledge ────
     if best_score < MIN_THRESHOLD:
         print(
-            f"💡 No strong match (best={best_score:.3f}) — "
+            f" No strong match (best={best_score:.3f}) — "
             "answering from general nutrition knowledge"
         )
         prompt = prompt_formatter(
