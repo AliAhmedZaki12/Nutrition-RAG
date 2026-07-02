@@ -43,11 +43,11 @@ async def lifespan(app: FastAPI):
     try:
         # ── 1. Run pipeline if data is missing ───────────
         if not os.path.exists(CSV_PATH) or not os.path.exists(EMB_PATH):
-            print("\n📄 Data not found — running pipeline automatically…")
+            print("\n Data not found — running pipeline automatically…")
             from backend.pipeline.main import run_pipeline
             run_pipeline(force=False)
         else:
-            print("\n⏩ Data found — skipping pipeline")
+            print("\n Data found — skipping pipeline")
 
         # ── 2. Connect to Pinecone ───────────────────────
         print("🔌 Connecting to Pinecone…")
@@ -55,14 +55,14 @@ async def lifespan(app: FastAPI):
         index = get_index()
 
         # ── 3. Load chunks ───────────────────────────────
-        print(f"📦 Loading chunks from CSV…")
+        print(f" Loading chunks from CSV…")
         df     = pd.read_csv(CSV_PATH)
         chunks = df.to_dict(orient="records")
 
         if not chunks:
             raise ValueError("CSV is empty — re-run pipeline with --force flag")
 
-        print(f"   ✓ {len(chunks)} chunks loaded")
+        print(f"    {len(chunks)} chunks loaded")
 
         # ── 4. Init retrievers ───────────────────────────
         from backend.services.retrieval_service import init_retrievers
@@ -70,21 +70,21 @@ async def lifespan(app: FastAPI):
 
         # ── 5. Pinecone health check ─────────────────────
         total = _get_vector_count(index)
-        print(f"   ✓ Pinecone vectors: {total}")
+        print(f"    Pinecone vectors: {total}")
 
         if total == 0:
-            print("   ⚠ WARNING: Pinecone index is empty!")
-            print("   ⚠ Run: python -m backend.pipeline.main --force")
+            print("    WARNING: Pinecone index is empty!")
+            print("    Run: python -m backend.pipeline.main --force")
 
         # ── Ready ────────────────────────────────────────
         app.state.ready = True
         print("\n" + "═" * 55)
-        print("  ✅  SYSTEM READY — Accepting requests")
+        print("    SYSTEM READY — Accepting requests")
         print("═" * 55 + "\n")
 
     except Exception as e:
-        print(f"\n❌ Startup error: {type(e).__name__}: {e}")
-        print("⚠  Running in DEGRADED MODE — /query will return 503")
+        print(f"\n Startup error: {type(e).__name__}: {e}")
+        print(" Running in DEGRADED MODE — /query will return 503")
         print("   Fix the error above and restart.\n")
         app.state.ready = False
 
