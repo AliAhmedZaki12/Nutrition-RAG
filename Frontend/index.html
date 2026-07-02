@@ -492,7 +492,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 <script>
 /* ═══════════════════════════════════════════════════════
    CONFIG
-   ✅ FIX: API_BASE = window.location.origin
+    FIX: API_BASE = window.location.origin
    → همّاشي نفس الـ domain، لا CORS مطلوب
 ═══════════════════════════════════════════════════════ */
 var API_BASE = window.location.origin;
@@ -642,7 +642,7 @@ async function generatePlan() {
   animateLoaderSteps();
 
   try {
-    /* ✅ FIX: POST + Content-Type header + JSON body */
+    /*  FIX: POST + Content-Type header + JSON body */
     var res = await fetch(API_BASE + '/query', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -651,7 +651,7 @@ async function generatePlan() {
 
     hideLoader();
 
-    /* ✅ FIX: parse all error codes */
+    /*  FIX: parse all error codes */
     if (!res.ok) {
       var errData = await res.json().catch(function(){ return {}; });
       var msg = (errData.detail && errData.detail.message) || ('Server error ' + res.status);
@@ -686,7 +686,7 @@ async function generatePlan() {
     renderDayGrid(STATE.currentWeek);
     renderProgress(STATE.profile);
     document.getElementById('plan-badge').style.display = '';
-    addAiMsg('⚠️ Could not reach the backend. Showing a locally-generated fallback plan. Check backend status.', 'warn');
+    addAiMsg(' Could not reach the backend. Showing a locally-generated fallback plan. Check backend status.', 'warn');
   }
 }
 
@@ -1110,7 +1110,7 @@ async function callAgent(msg) {
       if (day) payload.current_day = day;
     }
 
-    /* ✅ FIX: POST + Content-Type */
+    /*  FIX: POST + Content-Type */
     var res = await fetch(API_BASE + '/query', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1292,9 +1292,6 @@ function truncate(str,n){ return str&&str.length>n?str.substring(0,n)+'…':str|
 function esc(s)     { return (s||'').replace(/'/g,"\\'"); }
 function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* Lightweight markdown → HTML for chat bubbles
-   Supports: **bold**, *italic*, `code`, headers (###, ##, #),
-   bullet lists (- or *), numbered lists, paragraphs, line breaks. */
 function mdToHtml(src) {
   if (!src) return '';
   var s = escHtml(src);
