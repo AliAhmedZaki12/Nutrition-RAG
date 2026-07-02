@@ -78,7 +78,7 @@ def generate_answer(prompt: str) -> str:
     """
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        raise RuntimeError("❌ OPENROUTER_API_KEY is not set in environment")
+        raise RuntimeError(" OPENROUTER_API_KEY is not set in environment")
 
     # Try primary
     response = call_openrouter(PRIMARY_MODEL, prompt, api_key)
@@ -87,7 +87,7 @@ def generate_answer(prompt: str) -> str:
 
     # Try fallbacks
     for model in FALLBACK_MODELS:
-        print(f"🔁 Falling back to: {model}")
+        print(f" Falling back to: {model}")
         response = call_openrouter(model, prompt, api_key)
         if response:
             return response
